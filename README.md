@@ -6,7 +6,7 @@ QuantAI uses OpenAI Gym and Zipline to build reinforcement learning based tradin
 
 ## Installation
 
-QuantAI requires zipline and OpenAI Gym. It is recommended to work within a conda installation to ensure the proper dependencies are installed. 
+QuantAI requires zipline and keras (tensorflow backend). It is recommended to work within a conda installation to ensure the proper dependencies are installed. 
 
 ```sh
 $ conda install -n QuantAI
@@ -59,4 +59,85 @@ def get_benchmark_returns(symbol, start_date, end_date):
                 except:
                     algo.perf_tracker.all_benchmark_returns[date] = 1
 
+```
+---
+
+## Interface
+
+### Pipeline
+
+Create pipeline functions to bring data into the algorithm. These functions must returns a pipeline object and the number of factors. To use existing zipline factors, add them in the import statement. You must add code to pipeline list.
+
+pipeline file is located at *data/pipelines.py*
+
+``` python
+def sample_pipeline():
+
+    price_filter = USEquityPricing.close.latest >= 5
+    universe = price_filter
+
+    columns = {}
+    columns["Last"] = USEquityPricing.close.latest
+
+    return Pipeline(columns = columns, screen = universe), len(columns)
+```
+
+Bring custom factors into the algorithm in *data/factors.py*
+
+### Algorithm
+
+**Initialize**
+
+Method: TradingEnv
+Arguments:
+- code: pipeline_code from pipelines.py
+
+``` python
+my_algo = TradingEnv("sample_pipeline")
+```
+
+
+**Execute Trades (Optional)**
+
+You have the option of overwriting the execute function.
+
+
+Method: ExecuteTrades
+
+NOTE: You must set context.shorts, context.longs and context.securities
+
+``` python
+def my_execute_trades(self, context, data, state, action):
+
+    context.shorts = []
+    context.longs = []
+    context.securities = []
+
+my_algo = TradingEnv("sample_pipeline")
+my_algo.execute_trades = my_execute_trades
+
+```
+
+**Run Algorithm**
+METHOD: run_algorithm
+PARAMETERS
+    - start_date
+    - end_date
+    - base_capital
+    - reward:  possible values are "sharpe", "returns", "sortino"
+    - name:    used to save model/backtest output files, 
+            should also call backtest outupt file by this name
+    - print_iter:  how often the algorithm should print
+    - n_backtests: how many backtests the algo should train on
+
+``` python
+        algo.run_backtest("2002-1-1", "2016-1-1", 100000, name = "sample_pipeline")
+```
+
+---
+
+## Backtest
+
+``` sh
+python sample_algo.py > backtests/your_backtest_name.txt
 ```
