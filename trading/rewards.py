@@ -9,11 +9,9 @@ def sharpe_ratio(context):
 
 	if not np.count_nonzero(returns):
 		return 0
-	
-	negative_returns = np.array([r for r in returns if r < 0])
 
 	mean = np.mean(returns) - __RISK_FREE_RATE_DAILY__
-	std = np.std(negative_returns)
+	std = np.std(returns)
 
 	return (mean / std)*np.sqrt(252) if std > 0 else 0
 
