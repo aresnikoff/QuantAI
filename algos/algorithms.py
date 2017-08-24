@@ -10,9 +10,19 @@ def sample_algo():
 
 def main(args):
 
-	algo = TradingEnv("price_30")
-	algo.run_backtest("2002-1-1", "2016-1-1", 100000, \
-		reward = args.reward, name = "cnn_test", print_iter = 2, n_backtests = 150, trade_frequency = "week")
+	algo = TradingEnv(pipeline_code = args.pipeline, model_code = args.model_code, \
+		load = args.load, n_securities = int(args.n_securities))
+	algo.run_backtest(
+
+			start_date = args.start,
+			end_date = args.end,
+			capital = int(args.capital),
+			name = args.pipeline + "-" + args.model_code,
+			print_iter = int(args._print),
+			n_backtests = int(args.n_backtests),
+			trade_frequency = args.freq
+
+		)
 
 
 __ALGO_LIST__ = {
