@@ -49,11 +49,23 @@ def binary(input_dim, output_dim, lr, loss):
 	model.compile(loss='binary_crossentropy', optimizer=Adam(lr=lr), metrics=['accuracy'])
 	return model
 
+def three_layer(input_dim, output_dim, lr, loss):
+
+	model = Sequential()
+	model.add(Dense(500, input_dim = input_dim[0]*input_dim[1], activation = 'relu'))
+	model.add(Dense(250, activation='relu'))
+	model.add(Dense(100, activation='relu'))
+	model.add(Dense(output_dim, activation='linear'))
+	model.compile(loss=loss, optimizer=Adam(lr=lr))
+
+	return model
+
 __NETWORK_CODES__ = {
 	
 	"default": default_model,
 	"cnn": cnn,
-	"binary": binary
+	"binary": binary,
+	"three-layer": three_layer
 
 
 }

@@ -12,12 +12,29 @@ if __name__ == "__main__":
 	parser.add_argument('--algo', help='The algorithm to run', \
 		action = "store", dest = "algo_code")
 	parser.add_argument('--model', help='The neural network to use', \
-		action = "store", dest = "model_code", default = "cnn")
+		action = "store", dest = "model_code", default = "default")
 	parser.add_argument('--reward', help='The reward function to use', \
 		action = "store", dest = "reward", default = "sharpe")
 	parser.add_argument('--filename', help = "The file to store backtest output", \
 		action = "store", dest="filename", default = "_none")
-
+	parser.add_argument('--pipeline', help ='The pipeline to use', \
+		action = "store", dest="pipeline", default="price_avg")
+	parser.add_argument('--start', help = 'The backtest start date', \
+		action = "store", dest="start", default="2002-1-1")
+	parser.add_argument('--end', help = "The backtest end date", \
+		action = "store", dest = "end", default="2016-1-1")
+	parser.add_argument('--capital', help="Starting cash", \
+		action = "store", dest = "capital", default="100000")
+	parser.add_argument('--load', help = "The trained model weights to load", \
+		action = "store", dest = "load", default="__DO_NOT_USE__")
+	parser.add_argument('--print', help = "How often the algorithm should print", \
+		action = "store", dest = "_print", default="10")
+	parser.add_argument('--n_securities', help = "The number of securities to trade", \
+		action = "store", dest = "n_securities", default="100")
+	parser.add_argument('--n_backtests', help = "The number of backtests to run", \
+		action = "store", dest= "n_backtests", default="100")
+	parser.add_argument('--freq', help = "Trade frequency", \
+		action = "store", dest= "freq", default="week")
 
 	args = parser.parse_args()
 

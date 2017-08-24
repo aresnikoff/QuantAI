@@ -4,7 +4,8 @@ from zipline.pipeline.factors import (
 
 	### ADD ZIPLINE FACTORS HERE
 	AverageDollarVolume,
-	Returns
+	Returns,
+	SimpleMovingAverage
 )
 
 from factors import *
@@ -83,8 +84,28 @@ def price_30():
 		name = "close_" + str(i)
 		val = CloseOnN(window_length = i)
 		columns[name] = val
-
 	return Pipeline(columns = columns, screen = universe), len(columns)
+
+
+
+def price_avg():
+
+	n_days = 30
+
+	price_filter = USEquityPricing.close.latest >= 5
+	high_dollar_volume = AverageDollarVolume(window_length = 5).top(1500)
+
+	universe = price_filter & high_dollar_volume
+
+	columns = {}
+	columns["close_1"] = USEquityPricing.close.latest
+	for i in range(2, n_days):
+		name = "close_" + str(i)
+		val = CloseOnN(window_length = i)
+		columns[name] = val
+	columns["normalize"] = SimpleMovingAverage(inputs=[USEquityPricing.close], window_length = n_days)
+	return Pipeline(columns = columns, screen = universe), len(columns) - 1
+
 
 def percent_returns():
 
@@ -109,7 +130,8 @@ __PIPELINE_LIST__ = {
 	"price": price,
 	"price_100": price_100,
 	"price_30": price_30,
-	"percent_returns": percent_returns
+	"percent_returns": percent_returns,
+	"price_avg": price_avg
 
 }
 
