@@ -35,6 +35,10 @@ if __name__ == "__main__":
 		action = "store", dest= "n_backtests", default="100")
 	parser.add_argument('--freq', help = "Trade frequency", \
 		action = "store", dest= "freq", default="week")
+	parser.add_argument('--batch', help = "Training batch size", \
+		action = "store", dest = "batch_size", default = "32")
+	parser.add_argument('--lr', help = "The learning rate",
+		action = "store", dest = "lr", default = ".001")
 
 	args = parser.parse_args()
 

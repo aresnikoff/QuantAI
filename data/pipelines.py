@@ -5,7 +5,9 @@ from zipline.pipeline.factors import (
 	### ADD ZIPLINE FACTORS HERE
 	AverageDollarVolume,
 	Returns,
-	SimpleMovingAverage
+	SimpleMovingAverage,
+	EWMA,
+	EWMSTD
 )
 
 from factors import *
@@ -88,7 +90,7 @@ def price_30():
 
 
 
-def price_avg():
+def price_z():
 
 	n_days = 30
 
@@ -103,8 +105,9 @@ def price_avg():
 		name = "close_" + str(i)
 		val = CloseOnN(window_length = i)
 		columns[name] = val
-	columns["normalize"] = SimpleMovingAverage(inputs=[USEquityPricing.close], window_length = n_days)
-	return Pipeline(columns = columns, screen = universe), len(columns) - 1
+	columns["normalize_mean"] = EWMA(inputs=[USEquityPricing.close], window_length = n_days, decay_rate = 1)
+	columns["normalize_sd"] = EWMSTD(inputs=[USEquityPricing.close], window_length = n_days, decay_rate = 1)
+	return Pipeline(columns = columns, screen = universe), len(columns) - 2
 
 
 def percent_returns():
@@ -131,7 +134,7 @@ __PIPELINE_LIST__ = {
 	"price_100": price_100,
 	"price_30": price_30,
 	"percent_returns": percent_returns,
-	"price_avg": price_avg
+	"price_z": price_z
 
 }
 
