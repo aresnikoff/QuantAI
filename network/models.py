@@ -43,7 +43,8 @@ def binary(input_dim, output_dim, lr, loss):
 
 	# create model
 	model = Sequential()
-	model.add(Dense(60, input_dim=input_dim[0]*input_dim[1], kernel_initializer='normal', activation='relu'))
+	model.add(Dense(1500, input_dim=input_dim[0]*input_dim[1], kernel_initializer='normal', activation='relu'))
+	model.add(Dense(500, input_dim=input_dim[0]*input_dim[1], kernel_initializer='normal', activation='relu'))
 	model.add(Dense(output_dim, kernel_initializer='normal', activation='sigmoid'))
 	# Compile model
 	model.compile(loss='binary_crossentropy', optimizer=Adam(lr=lr), metrics=['accuracy'])
@@ -52,20 +53,41 @@ def binary(input_dim, output_dim, lr, loss):
 def three_layer(input_dim, output_dim, lr, loss):
 
 	model = Sequential()
-	model.add(Dense(500, input_dim = input_dim[0]*input_dim[1], activation = 'relu'))
-	model.add(Dense(250, activation='relu'))
-	model.add(Dense(100, activation='relu'))
+	model.add(Dense(500, input_dim = input_dim[0]*input_dim[1], activation = 'sigmoid'))
+	model.add(Dense(250, activation='sigmoid'))
+	model.add(Dense(100, activation='sigmoid'))
 	model.add(Dense(output_dim, activation='linear'))
 	model.compile(loss=loss, optimizer=Adam(lr=lr))
 
 	return model
+
+def three_layer2(input_dim, output_dim, lr, loss):
+
+	model = Sequential()
+	model.add(Dense(4500, input_dim = input_dim[0]*input_dim[1], activation = 'sigmoid'))
+	model.add(Dense(1250, activation='sigmoid'))
+	model.add(Dense(700, activation='sigmoid'))
+	model.add(Dense(output_dim, activation='linear'))
+	model.compile(loss=loss, optimizer=Adam(lr=lr))
+
+	return model
+
+def one_layer(input_dim, output_dim, lr, loss):
+
+	model = Sequential()
+	model.add(Dense(input_dim[0] / 2), input_dim = input_dim[0]*input_dim[1], activation = 'relu')
+	model.add(Dense(32, activation = 'relu'))
+	model.add(Dense(output_dim, activation = 'sigmoid'))
+
+
 
 __NETWORK_CODES__ = {
 	
 	"default": default_model,
 	"cnn": cnn,
 	"binary": binary,
-	"three-layer": three_layer
+	"three-layer": three_layer,
+	"three-layer2": three_layer2
 
 
 }

@@ -39,6 +39,10 @@ if __name__ == "__main__":
 		action = "store", dest = "batch_size", default = "32")
 	parser.add_argument('--lr', help = "The learning rate",
 		action = "store", dest = "lr", default = ".001")
+	parser.add_argument('--node', help = "The network node structure", \
+		action = "store", dest = "node", default = "two-node")
+	parser.add_argument('--seed', help = "The random seed", \
+		action = "store", dest = "seed", default = "100")
 
 	args = parser.parse_args()
 

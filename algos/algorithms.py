@@ -53,7 +53,8 @@ def main(args):
 		pipeline_code = args.pipeline,
 		model_code = args.model_code,
 		load = args.load,
-		n_securities = int(args.n_securities)
+		n_securities = int(args.n_securities),
+		seed = int(args.seed)
 	)
 	algo.set_agent_params(
 		batch_size = int(args.batch_size),
