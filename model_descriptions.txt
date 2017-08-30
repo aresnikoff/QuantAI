@@ -1,0 +1,9 @@
+#### Dense Model ###
+
+code: 'dense'
+description: basic neural network that will simply pass input through activation of hidden layers
+additional parameters:
+	from the command line, set --layers 25-36 to create hidden layers with output sizes 25 and 36 respectively
+	numbers should be entered separated by a hypen ('-')
+
+

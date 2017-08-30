@@ -43,6 +43,8 @@ if __name__ == "__main__":
 		action = "store", dest = "node", default = "two-node")
 	parser.add_argument('--seed', help = "The random seed", \
 		action = "store", dest = "seed", default = "100")
+	parser.add_argument("--layers", help = "hidden layer structure",
+		action = "store", dest = "hidden_layers", default = "64")
 
 	args = parser.parse_args()
 
