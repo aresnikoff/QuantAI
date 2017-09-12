@@ -1,0 +1,16 @@
+# OS FILES
+*.DS_STORE
+
+# LOG FILES
+*.log
+
+# BACKTESTS
+
+/backtests/*
+
+# MODELS
+
+/models/*
+
+
+
