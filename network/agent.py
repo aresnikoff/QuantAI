@@ -1,3 +1,6 @@
+from collections import deque
+
+
 import logging
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger('Agent')
@@ -5,9 +8,23 @@ log.setLevel(logging.INFO)
 
 class Agent(object):
 
-	def __init__(self, n_securities, batch_size, lr):
+	def __init__(self, param_dict):
 
-		pass
+		self.n_securities = param_dict["n_securities"]
+        self.n_factors = param_dict["n_factors"]
+
+        self.lr = param_dict["lr"]
+        self.batch_size = param_dict["batch_size"]
+
+        # discount rate
+        self.gamma = param_dict["gamma"]
+
+        # initialize memory
+        self.memory = deque(maxlen = 2000)
+
+
+        # intitalize network
+        self.model = self._build_model(param_dict["model"])
 
 
 
@@ -43,15 +60,6 @@ class Agent(object):
 			_target = self.model.predict(_state_input)
 
 
-	def update_target(self, stock, risk, returns, action):
-
-		pass
-
-
-	def _build_model(self, code = "default"):
-
-		pass
-
 	def save(self, name):
 
 		path = "models/"
@@ -85,6 +93,24 @@ class Agent(object):
 		self.model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))
 		#self.epsilon = .75
 		log.info("Loaded model (" + name + ") from disk")
+
+	def _reshape_input(self, state):
+
+		pass
+
+	def _reshape_output(self, predictions):
+
+		pass
+
+
+	def _update_target(self, stock, risk, returns, action):
+
+		pass
+
+
+	def _build_model(self, code = "default"):
+
+		pass
 
 
 
