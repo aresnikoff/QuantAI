@@ -78,15 +78,17 @@ class MarketNN(object):
       #pool2 = MaxPooling1D(pool_size=2)(conv4)
       lstm1 = LSTM(20, activation = "relu", dropout=0.2, 
         recurrent_dropout=0.2, return_sequences = True)(conv4)
-    #output2 = Dense(3, activation = "softmax")(lstm1)
+      #output2 = Dense(3, activation = "softmax")(lstm1)
       output2 = TimeDistributed(Dense(3, activation = "relu"))(lstm1)
 
       main_security_input.append(security_input)
       main_security_output.append(output2)
 
+    conf_output = Dense(1, activation = "sigmoid")(output)
+
 
     model = Model(inputs = [main_market_input] + main_security_input,
-            outputs = [output] + main_security_output)
+            outputs = [output] + main_security_output + [conf_output])
     sgd = SGD(lr=self.lr, decay=1e5, momentum=0.5, nesterov=True)
     model.compile(optimizer=sgd, loss = 'mse', metrics=['accuracy'])
     return model

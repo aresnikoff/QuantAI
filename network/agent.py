@@ -101,7 +101,7 @@ class Agent(object):
         if decision > 0 or decision < 0:
             decision_accuracy["total"] += 1
 
-        tolerance = 1.5
+        tolerance = .5
         reward = np.cos(sec_risk*.5*np.pi)*sec_returns
 
         if _type == "long":
@@ -115,7 +115,7 @@ class Agent(object):
 
 
             stock_target[0][0][i*3 + 1] = .1#np.reshape([0,1,0],  [1,3])
-            stock_target[i+1][0][0][1] = .1
+            stock_target[i+1][0][0][1] = -.1
 
           else:
               
@@ -136,14 +136,10 @@ class Agent(object):
               
             stock_target[i][0][0][0] = 1# np.reshape([reward, 0,0], [1,3])
 
-          n_correct = decision_accuracy["correct"]
-          total = decision_accuracy["total"]
-          predicted_well = n_correct / float(total) > .5 if total > 0 else 0
-          if predicted_well:
-
-            stock_target[-1] = np.reshape([1,0], [1,2])
-          else:
-            stock_target[-1] = np.reshape([0,1], [1,2])
+        n_correct = decision_accuracy["correct"]
+        total = decision_accuracy["total"]
+        confidence = n_correct / float(total) if total > 0 else np.random.random()
+        stock_target[-1][0] = confidence
 
       target = stock_target
 
@@ -284,6 +280,8 @@ class Agent(object):
 
     security_predictions = predictions[1:n_securities + 1]
 
+    conf_prediction = predictions[-1][0]
+
     s_positions = self.interpret(security_predictions)
 
     if market_predictions.shape == (1, 3*n_securities):
@@ -302,7 +300,7 @@ class Agent(object):
 
 
       output = Actions(positions = positions,
-                       confidence = 1,
+                       confidence = conf_prediction,
                        type="long")
       return output
 
