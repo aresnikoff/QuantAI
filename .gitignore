@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+*.pyc
+*.DS_Store
+=======
 # OS FILES
 *.DS_STORE
 
@@ -14,3 +18,4 @@
 
 
 
+>>>>>>> master
