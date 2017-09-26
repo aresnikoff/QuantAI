@@ -1,2 +1,21 @@
+<<<<<<< HEAD
 *.pyc
 *.DS_Store
+=======
+# OS FILES
+*.DS_STORE
+
+# LOG FILES
+*.log
+
+# BACKTESTS
+
+/backtests/*
+
+# MODELS
+
+/models/*
+
+
+
+>>>>>>> master
