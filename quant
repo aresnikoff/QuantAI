@@ -1,0 +1,23 @@
+#!/Users/Andrew/miniconda2/envs/quant/bin/python
+
+import argparse
+from network.optimize import find_best_model
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
+
+def quant():
+
+    parser = argparse.ArgumentParser(prog = 'QuantAI',
+        description = "Quant AI Algorithm")
+
+    parser.add_argument('--optimize', help = "Find optimal network",
+        action = "store_true", dest = "optimize")
+
+    args = parser.parse_args()
+
+    if args.optimize:
+
+        find_best_model()
+
+if __name__ == "__main__":
+    quant()

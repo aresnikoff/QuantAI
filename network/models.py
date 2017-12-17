@@ -67,28 +67,31 @@ class MarketNN(object):
     dense1 = Dense(128, activation = "relu", use_bias = True,)(flat)
 
 
-    output = Dense(n_securities * 3, activation = "relu", use_bias = True,)(dense1)
+    output = Dense(n_securities * 3, activation = "softmax", use_bias = True,)(dense1)
 
-    main_security_input = []
-    main_security_output = []
-    for i in xrange(n_securities):
-      security_input = Input(shape = (1, n_factors))
+    # main_security_input = []
+    # main_security_output = []
+    # conv4 = Conv1D(filters=32, kernel_size=3, padding='same', activation='relu', use_bias = True)
+    # lstm1 = LSTM(20, activation = "relu", dropout=0.2, 
+    #   recurrent_dropout=0.2, return_sequences = True, use_bias = True)
+    # for i in xrange(n_securities):
+    #   security_input = Input(shape = (1, n_factors))
 
-      conv4 = Conv1D(filters=32, kernel_size=3, padding='same', activation='relu')(security_input)
-      #pool2 = MaxPooling1D(pool_size=2)(conv4)
-      lstm1 = LSTM(20, activation = "relu", dropout=0.2, 
-        recurrent_dropout=0.2, return_sequences = True)(conv4)
-      #output2 = Dense(3, activation = "softmax")(lstm1)
-      output2 = TimeDistributed(Dense(3, activation = "relu"))(lstm1)
+    #   x = conv4(security_input)
+    #   x = lstm1(x)
+    #   #pool2 = MaxPooling1D(pool_size=2)(conv4)(conv4)
 
-      main_security_input.append(security_input)
-      main_security_output.append(output2)
+    #   #output2 = Dense(3, activation = "softmax")(lstm1)
+    #   output2 = TimeDistributed(Dense(3, activation = "relu", use_bias = True))(x)
 
-    conf_output = Dense(1, activation = "sigmoid")(output)
+    #   main_security_input.append(security_input)
+    #   main_security_output.append(output2)
+
+    # conf_output = Dense(1, activation = "sigmoid", use_bias = True)(output)
 
 
-    model = Model(inputs = [main_market_input] + main_security_input,
-            outputs = [output] + main_security_output + [conf_output])
+    model = Model(inputs = [main_market_input], #+ main_security_input,
+            outputs = [output])# + main_security_output + [conf_output])
     sgd = SGD(lr=self.lr, decay=1e5, momentum=0.5, nesterov=True)
     model.compile(optimizer=sgd, loss = 'mse', metrics=['accuracy'])
     return model

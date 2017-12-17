@@ -54,16 +54,25 @@ def gramian_angular_field(state, param_dict):
 
   return state
 
+def scale2(state):
+
+  scale = preprocessing.MinMaxScaler(feature_range = (-1, 1))
+  return scale.fit_transform(state)
+
+
 def preprocess(state, param_dict):
 
   columns = state.columns
 
-  state = gramian_angular_field(state, param_dict)
+  state = np.log(state)
+  state = pd.DataFrame(_pca(state), columns = columns)
+  state = pd.DataFrame(scale2(state), columns = columns)
+  #state = gramian_angular_field(state, param_dict)
 
   price_col_names = [x for x in columns.tolist() if "price_" in x]
   price_cols = np.flip(natural_sort(price_col_names), axis = 0)
 
-  state = pd.DataFrame(state, columns = columns)
+  #state = pd.DataFrame(state, columns = columns)
   state = state[price_cols]
   return state
 
