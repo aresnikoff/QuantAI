@@ -29,7 +29,7 @@ def parse_args():
   agent_group.add_argument('--batch', help = "Training batch size", \
     action = "store", dest = "batch_size", type = int, default = "32")
   agent_group.add_argument('--lr', help = "The learning rate",
-    action = "store", dest = "lr", type = float, default = ".001")
+    action = "store", dest = "lr", type = float, default = ".05")
   agent_group.add_argument('--lag', help = "The number of iterations \
     before replay", action = 'store', dest = "lag", type = int,
     default = "100")

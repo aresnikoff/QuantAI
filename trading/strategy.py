@@ -1,3 +1,4 @@
+# coding=utf-8
 import numpy as np
 from zipline.api import (
     order, record, symbol, schedule_function,
@@ -13,86 +14,6 @@ import logging
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger('QuantAI')
 log.setLevel(logging.INFO)
-
-
-
-def execute_trades(self, context, data, actions):
-
-  cash = self.cash
-
-  market = self.market
-  confidence = actions.confidence
-  positions = actions.positions
-
-  # determine longs and shorts
-  securities = []
-  longs = []
-  shorts = []
-
-  for i in xrange(self.n_securities):
-
-    eq = market.iloc[i].name
-    pos = positions[i]
-    
-    if pos == -1:
-
-      shorts.append(eq)
-
-    elif pos == 1:
-
-      longs.append(eq)
-
-    securities.append(eq)
-
-  # determine weights
-
-  long_weight = confidence / float(len(securities))
-  short_weight = -long_weight
-
-  log.info(long_weight)
-
-  held_securities = self.held_securities()
-
-  for security in longs:
-
-    is_held = security in held_securities
-
-    if not is_held and data.can_trade(security):
-      try:
-        order_target_percent(security, long_weight)
-
-      except Exception as e:
-
-        log.warning("Could not order security: " + str(security) + "\n" + e.message)
-
-  for security in shorts:
-
-    is_held = security in held_securities
-
-    if not is_held and data.can_trade(security):
-      try:
-        order_target_percent(security, short_weight)
-
-      except Exception as e:
-        log.info(confidence)
-        log.warning("Could not order security: " + str(security) + "\n" + e.message)
-
-  for security in securities:
-
-    is_long = security in longs
-    is_short = security in shorts
-    is_held = security in held_securities
-
-    if is_held and not is_long and not is_short:
-
-      if data.can_trade(security):
-
-        order_target_value(security, 0)
-
-  self.longs = longs
-  self.shorts = shorts
-  self.securities = securities
-
 
 
 class Strategy(object):
@@ -170,6 +91,7 @@ class Strategy(object):
     longs = []
     shorts = []
 
+    # add securities to lists
     for i in xrange(self.n_securities):
 
       eq = market.iloc[i].name
@@ -187,54 +109,59 @@ class Strategy(object):
 
     # determine weights
 
-    long_weight = confidence / float(len(securities))
-    short_weight = -long_weight
+    held = self.held_securities()
 
-    held_securities = self.held_securities()
+    weight = 1 / float(len(held)) if len(held) > len(securities) else 1/float(len(securities))
 
-    for security in longs:
 
-      is_held = security in held_securities
+    for i in xrange(len(held)):
 
-      if not is_held and data.can_trade(security):
-        try:
-          order_target_percent(security, long_weight)
+      security = held[i]
+      ticker = security.symbol
 
-        except Exception as e:
-
-          if np.isnan(confidence):
-
-            raise BadOutput("Confidence is NaN")
-
-          log.warning("Could not order security: " + str(security) + "\n" + e.message)
-
-    for security in shorts:
-
-      is_held = security in held_securities
-
-      if not is_held and data.can_trade(security):
-        try:
-          order_target_percent(security, short_weight)
-
-        except Exception as e:
-
-          if np.isnan(confidence):
-
-            raise BadOutput("Confidence is NaN")
-
-          log.warning("Could not order security: " + str(security) + "\n" + e.message)
-
-    for security in securities:
-
-      is_long = security in longs
-      is_short = security in shorts
-      is_held = security in held_securities
-
-      if is_held and not is_long and not is_short:
+      if (not security.symbol in self.universe) or \
+         (not security in longs and not security in shorts):
 
         if data.can_trade(security):
 
-          order_target_value(security, 0)
+          order_target_percent(security, 0)
+
+
+    for i in xrange(len(securities)):
+
+      security = securities[i]
+      c = confidence[i]
+
+      #if c*weight > .05:
+        #log.info(c*weight)
+      #  pass
+
+      if security in longs:
+
+        if not self.is_short(security) and data.can_trade(security):
+
+          order_target_percent(security, c*weight)
+
+
+        elif self.is_short(security) and data.can_trade(security):
+
+          order_target_percent(security, 0)
+
+      elif security in shorts:
+
+        if not self.is_long(security) and data.can_trade(security):
+
+          order_target_percent(security, c*weight)
+        
+        elif self.is_long(security) and data.can_trade(security):
+
+          order_target_percent(security, 0)       
+
+      else:
+
+        if self.is_held(security) and data.can_trade(security):
+
+          order_target_percent(security, 0)
 
     self.longs = longs
     self.shorts = shorts
@@ -256,21 +183,26 @@ class Strategy(object):
 
   def review_performance(self, context, data):
 
-    if not self.market is None:
+    #log.info(self.prices)
+    if not self.market is None and len(self.prices.keys()) > 0:
       market = self.market
 
       sec_returns = {}
+      sec_return_values = {}
       for j in xrange(market.shape[0]):
         stock = market.iloc[j].name
         sec_id = stock.sid
-        start_price = self.prices[sec_id]
+        start_price = self.prices[sec_id] if sec_id in self.prices else 1
 
         current_price = data[stock].close_price
         sec_return = ((current_price - start_price) / start_price) * 100
         sec_returns[sec_id] = sec_return
 
+        # do i want to look at absolute return
+        sec_return_value = current_price - start_price
+        sec_return_values[sec_id] = sec_return_value
 
-        self.agent.remember(self.market, self.actions,self.risk_values, sec_returns)
+      self.agent.remember(self.market, self.actions,self.risk_values, sec_returns, sec_return_values)
       self.sec_returns = sec_returns
       self.prices = {}
 
@@ -300,7 +232,7 @@ class Strategy(object):
       # create array of output indicies
       idx = np.arange(market.shape[0])
 
-      np.random.shuffle(idx)
+      #np.random.shuffle(idx)
 
       market = market.iloc[idx]
 
@@ -348,28 +280,49 @@ class Strategy(object):
 
     return self.longs + self.shorts
 
+  def is_long(self, security):
+
+    return security in self.longs
+
+  def is_short(self, security):
+
+    return security in self.shorts
+
+  def is_held(self, security):
+
+    return security in self.held_securities()
+
   def clear_positions(self, context, data):
 
     held_securities = self.held_securities()
 
-    for stock in held_securities:
+    for stock, pos in context.portfolio.positions.iteritems():
 
       if data.can_trade(stock):
 
         order_target_percent(stock, 0)
 
+      else:
+
+        log.info("COULD NOT CLEAR!")
+
+    self.longs = []
+    self.shorts = []
+
   ## print
 
-  def view_status(self):
+  def view_status(self, context, data):
+
 
     if not self.actions is None:
       start_cash = float(self.param_dict["cash"])/float(self.n_portfolios)
       today = str(get_datetime())[:-15]
       value = float(self.cash)
       returns = float(float(self.cash - start_cash)/start_cash * 100)
-      confidence = float(self.actions.confidence)
+      #confidence = float(self.actions.confidence)
       n_long = int(len(self.longs))
       n_short = int(len(self.shorts))
+      leverage = context.account.leverage
 
       date_str = "[{!s}]\t"
       ret_str = "total returns: {:03.2f}%\t"
@@ -377,14 +330,43 @@ class Strategy(object):
       s_str = "n short: {:n}\t"
       l_str = "n long: {:n}\t"
       conf_str = "confidence: {:03.2f}%"
+      lev_str = "leverage: {:03.2f}"
 
-      template = date_str + ret_str + value_str + s_str + l_str# + conf_str
-      template = template.format(today, returns, value, n_short, n_long)#, confidence)
+      template = date_str + ret_str + value_str + s_str + l_str + lev_str #+ conf_str
+      template = template.format(today, returns, value, n_short, n_long, leverage)#, confidence)
 
 
     # template = "[{!s}]\ttotal returns: {:03.2f}%\tvalue: ${:03,.2f}\tn short:{:n}\n long: {:n}\tconfidence:{:03.2f}%"\
     #     .format(today, returns, value, n_short, n_long, float(confidence))
       log.info(template)
+
+      stocks_template = ""
+      n_held = len(context.portfolio.positions)
+      net_gain = 0
+
+      for eq, pos in context.portfolio.positions.iteritems():
+
+        ticker = eq.symbol
+        n_shares = pos.amount
+        current_val = pos.last_sale_price * n_shares
+        paid_val = pos.cost_basis * n_shares
+        net_gain += current_val - paid_val
+
+      #   stock_template = "stock {!s}:\tnet gain: {:03.2f}\t".format(ticker, net_gain)
+      #   stocks_template += stock_template
+      # log.info(stocks_template)
+      sign = "$" if net_gain >= 0 else "-$"
+      log.info("n held: {:n}\t net gain: {!s}{:03.2f}\t".format(n_held, sign, abs(net_gain)))
+      tickers = ""
+      eqs = self.market.index.values.tolist()
+      for i in xrange(min(len(eqs), 10)):
+
+        tickers += "{!s} ".format(eqs[i].symbol)
+
+      log.info("Market: " + tickers)
+
+
+      return self.cash
 
 
 

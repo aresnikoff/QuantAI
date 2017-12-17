@@ -30,6 +30,8 @@ class Agent(object):
     # discount rate
     self.gamma = param_dict["gamma"]
 
+    self.n_repeat = 16
+
     # initialize memory
     self.memory = deque(maxlen = 2000)
 
@@ -43,21 +45,14 @@ class Agent(object):
 
 
   ## AGENT INTERFACE
-  def remember(self, state, action, risk, returns):
+  def remember(self, state, action, risk, returns, return_values):
 
-    self.memory.append((state, action, risk, returns))
+    self.memory.append((state, action, risk, returns, return_values))
 
 
   def act(self, state):
 
-    # reshape input to model graph
-
-    state = self.reshape_input(state)
-
-    # get model predictions on input
-    predictions = self.model.predict(state)
-
-    actions = self.reshape_output(predictions)
+    actions = self.bootstrap_actions(state, self.n_repeat)
 
     return actions
 
@@ -66,7 +61,7 @@ class Agent(object):
     # get minibatch from memory
     minibatch = random.sample(self.memory, self.batch_size)
 
-    for state, actions, risk, returns in minibatch:
+    for state, actions, risk, returns, values in minibatch:
 
       #state.sort_index(inplace = True)
 
@@ -101,52 +96,53 @@ class Agent(object):
         if decision > 0 or decision < 0:
             decision_accuracy["total"] += 1
 
-        tolerance = .5
+        tolerance = .7
         reward = np.cos(sec_risk*.5*np.pi)*sec_returns
+        value = values[sec_id]
 
         if _type == "long":
 
-          if reward > tolerance:
+          if reward > tolerance or reward < -tolerance:
 
-            stock_target[0][0][i*3 + 2] = 1 #np.reshape([0,0,reward],  [1,3])
-            stock_target[i+1][0][0][2] = 1
+            stock_target[0][3*i: 3*i + 3] += np.array([-sec_returns, .1, sec_returns])#np.reshape([-reward,.1,reward],  [1,3])
+            #stock_target[i+1][0][0][2] = 1
 
           elif -tolerance <= reward <= tolerance:
 
 
-            stock_target[0][0][i*3 + 1] = .1#np.reshape([0,1,0],  [1,3])
-            stock_target[i+1][0][0][1] = -.1
+            stock_target[0][3*i: 3*i + 3] += np.array([-1, .1, -1])#np.reshape([-.1,1,-.1],  [1,3])
+            #stock_target[i+1][0][0][1] = -.1
 
-          else:
+          #else:
               
-            stock_target[0][0][i*3] = 1# np.reshape([reward, 0,0], [1,3])
-            stock_target[i+1][0][0][0] = 1
+          #  stock_target[0][3*i: 3*i + 3] = np.reshape([-sec_returns, .1,sec_returns], [1,3])
+            #stock_target[i+1][0][0][0] = 1
 
         else:
 
           if reward > tolerance:
 
-            stock_target[i][0][0][2] = 1 #np.reshape([0,0,reward],  [1,3])
+            stock_target[i][0][0][2] += 1 #np.reshape([0,0,reward],  [1,3])
 
           elif -tolerance <= reward <= tolerance:
 
-            stock_target[i][0][0][1] = .1#np.reshape([0,1,0],  [1,3])
+            stock_target[i][0][0][1] += 1#np.reshape([0,1,0],  [1,3])
 
           else:
               
-            stock_target[i][0][0][0] = 1# np.reshape([reward, 0,0], [1,3])
+            stock_target[i][0][0][0] += 1# np.reshape([reward, 0,0], [1,3])
 
-        n_correct = decision_accuracy["correct"]
-        total = decision_accuracy["total"]
-        confidence = n_correct / float(total) if total > 0 else np.random.random()
-        stock_target[-1][0] = confidence
+        #n_correct = decision_accuracy["correct"]
+        #total = decision_accuracy["total"]
+        #confidence = n_correct / float(total) if total > 0 else np.random.random()
+        #stock_target[-1][0] = confidence
 
       target = stock_target
 
       self.model.fit(state_input, target, verbose = 0)
     log.info("Model updated")
               
-  def save(self, name = "last"):
+  def save(self, name = "last3"):
 
     path = "models/"
 
@@ -203,14 +199,14 @@ class Agent(object):
 
     # samples, timesteps, features
 
-    _states = []
-    for i in xrange(n_securities):
+    # _states = []
+    # for i in xrange(n_securities):
 
-      stock = state.iloc[i]
-      prices = np.reshape(stock.values, [1, 1, n_factors])
-      _states.append(prices)    
+    #   stock = state.iloc[i]
+    #   prices = np.reshape(stock.values, [1, 1, n_factors])
+    #   _states.append(prices)    
 
-    return [_state] + _states
+    return [_state] #+ _states
 
 
     # n_days = self.n_days
@@ -237,6 +233,56 @@ class Agent(object):
 
     # return [state] + security_input
         
+
+  def bootstrap_actions(self, state, n_repeat):
+
+    bootstraps = {}
+    securities = list(state.index.values)
+    for stock in securities:
+
+      bootstraps[stock.symbol] = 0
+
+    market = state
+
+    idx = np.arange(market.shape[0])
+
+
+    for i in xrange(n_repeat):
+
+      np.random.shuffle(idx)
+      market = market.iloc[idx]
+
+      # reshape input to model graph
+      _market = self.reshape_input(market)
+
+      # get model predictions on input
+      predictions = self.model.predict(_market)
+
+      actions = self.reshape_output(predictions)
+
+      for j in xrange(len(actions)):
+        stock = market.iloc[j].name.symbol
+        bootstraps[stock] += actions[j]
+    for key, value in bootstraps.items():
+      bootstraps[key] = value / float(n_repeat)
+
+    final_confidence = []
+    for stock in securities:
+
+      conf = bootstraps[stock.symbol]
+      final_confidence.append(conf)
+
+    tol = .25
+    
+    min_val = min(final_confidence)
+    max_val = max(final_confidence)
+
+    final_pos = [1 if x >= tol else -1 if x <= -tol else 0 for x in final_confidence]
+    final_confidence = scale(final_confidence,-1,1)
+
+    output = Actions(positions = final_pos, confidence = final_confidence, type = "long")
+
+    return output
 
   def interpret(self, predictions):
 
@@ -275,42 +321,14 @@ class Agent(object):
 
     n_securities = self.n_securities
 
-    # first is market output
-    market_predictions = predictions[0]
-
-    security_predictions = predictions[1:n_securities + 1]
-
-    conf_prediction = predictions[-1][0]
-
-    s_positions = self.interpret(security_predictions)
+    market_predictions = predictions
 
     if market_predictions.shape == (1, 3*n_securities):
 
       m_positions = self.interpret_long(market_predictions[0])
 
-      positions = []
-      for i in xrange(n_securities):
 
-        m_pos = m_positions[i]
-        s_pos = s_positions[i]
-
-        positions.append(0 if m_pos != s_pos else m_pos)
-
-
-
-
-      output = Actions(positions = positions,
-                       confidence = conf_prediction,
-                       type="long")
-      return output
-
-    n_sec = self.n_securities
-    positions = self.interpret(predictions[:n_sec])
-    #confidence = predictions[-1][0][0]
-
-    output = Actions(positions = positions,
-                     confidence = 1)#confidence)
-    return output
+      return m_positions
 
 
   def _update_target(self, stock, risk, returns, action):
@@ -325,7 +343,17 @@ class Agent(object):
     return NN.build_model()
 
 
-
+def scale(OldList, NewMin, NewMax):
+    NewRange = float(NewMax - NewMin)
+    OldMin = min(OldList)
+    OldMax = max(OldList)
+    OldRange = float(OldMax - OldMin)
+    ScaleFactor = NewRange / OldRange if OldRange != 0 else 1
+    NewList = []
+    for OldValue in OldList:
+        NewValue = ((OldValue - OldMin) * ScaleFactor) + NewMin
+        NewList.append(NewValue)
+    return NewList
 
 
 

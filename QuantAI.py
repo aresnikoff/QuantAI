@@ -88,6 +88,7 @@ class QuantAI(object):
 
     # select new securities to trade every month
     month_date, month_time = get_date_rules("month")
+    week_date, week_time = get_date_rules("week")
     day_date, day_time = get_date_rules("day")
     schedule_function(self.update_universe, 
                       month_date["start"], 
@@ -150,7 +151,7 @@ class QuantAI(object):
 
       for strategy in self.strategies:
 
-        strategy.view_status()
+        cash = strategy.view_status(context, data)
 
   ## STRATEGY HANDLER
   def create_strategies(self, param_dict):
@@ -178,6 +179,10 @@ class QuantAI(object):
     end_date = param_dict["end"]
     while run < self.n_backtests:
 
+        start_year = np.random.randint(low = 2002, high = 2016)
+        start_month = np.random.randint(low = 1, high = 13)
+        start_date = str(start_year) + "-" + str(start_month) + "-1"
+        
         try:
 
             backtest = run_algorithm(
@@ -192,16 +197,16 @@ class QuantAI(object):
                 bundle = "quantopian-quandl"
             )
 
-            save_q = "Do you want to save performance? (y/n)"
-            if (raw_input(save_q) == 'y'):
+            # save_q = "Do you want to save performance? (y/n)"
+            # if (raw_input(save_q) == 'y'):
 
-                perf_name = "backtests/performance/" + name + \
-                     "_" + str(run+1) + ".csv"
-                perf.to_csv(perf_name)
-                log.info("Algorithm succeeded! \
-                    Saved performance results to: " + perf_name)
-                print("Algorithm succeeded! Saved \
-                    performance results to: " + perf_name)
+            #     perf_name = "backtests/performance/" + name + \
+            #          "_" + str(run+1) + ".csv"
+            #     perf.to_csv(perf_name)
+            #     log.info("Algorithm succeeded! \
+            #         Saved performance results to: " + perf_name)
+            #     print("Algorithm succeeded! Saved \
+            #         performance results to: " + perf_name)
 
 
         except OutOfMoney as e:
@@ -215,7 +220,7 @@ class QuantAI(object):
         run += 1
         if run % 5 == 0:
 
-            self.agent.save()
+          self.agent.save()
 
 if __name__ == "__main__":
 
