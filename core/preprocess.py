@@ -61,7 +61,7 @@ def preprocess(state, param_dict):
   state = gramian_angular_field(state, param_dict)
 
   price_col_names = [x for x in columns.tolist() if "price_" in x]
-  price_cols = np.flip(natural_sort(price_col_names), axis = 0)
+  price_cols = list(reversed(natural_sort(price_col_names)))
 
   state = pd.DataFrame(state, columns = columns)
   state = state[price_cols]

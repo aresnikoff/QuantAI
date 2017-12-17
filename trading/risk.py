@@ -25,7 +25,7 @@ def volatility(row, use_positive = False):
 def calculate_risk(market, metric = "vol"):
 
   price_col_names = [x for x in market.columns.tolist() if "price_" in x]
-  price_cols = np.flip(natural_sort(price_col_names), axis = 0)
+  price_cols = list(reversed(natural_sort(price_col_names)))
 
   price_matrix = market[price_cols]
 
