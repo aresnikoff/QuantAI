@@ -2,6 +2,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.utils.np_utils import to_categorical
 from keras.callbacks import EarlyStopping
+from keras import backend as K
 
 
 def compile_model(network, n_classes, input_shape):
@@ -16,7 +17,7 @@ def compile_model(network, n_classes, input_shape):
     n_neurons = network['n_neurons']
     activation = network['activation']
     optimizer = network['optimizer']
-
+    K.clear_session()
     model = Sequential()
 
     # Add each layer.
@@ -31,9 +32,9 @@ def compile_model(network, n_classes, input_shape):
         model.add(Dropout(0.2))  # hard-coded dropout
 
     # Output layer.
-    model.add(Dense(1, activation='softmax'))
+    model.add(Dense(n_classes, activation='softmax'))
 
-    model.compile(loss='binary_crossentropy', optimizer=optimizer,
+    model.compile(loss='sparse_categorical_crossentropy', optimizer=optimizer,
                   metrics=['accuracy'])
 
     return model
@@ -44,9 +45,8 @@ def train_and_score(network, dataset, memory):
         network (dict): the parameters of the network
         dataset (str): Dataset to use for training/evaluating
     """
-    key = tuple(sorted(memory.items()))
+    key = tuple(sorted(network.items()))
     if key in memory:
-        print("found")
         return memory[key]
 
 
@@ -57,7 +57,7 @@ def train_and_score(network, dataset, memory):
 
     model.fit(x_train, y_train,
               batch_size=batch_size,
-              epochs=100,  # using early stopping, so no real limit
+              epochs=1000,  # using early stopping, so no real limit
               verbose=0,
               validation_data=(x_test, y_test),
               callbacks=[EarlyStopping()])

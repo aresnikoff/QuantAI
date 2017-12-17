@@ -52,7 +52,7 @@ class EvolutionaryProcess(object):
 
         n_children = random.randint(0, max_children)
         children = []
-        for _ in xrange(n_children):
+        for _ in range(n_children):
 
             child = {}
 

@@ -1,7 +1,6 @@
 from evolution.data import generate_data
 from evolution.EvolutionaryProcess import EvolutionaryProcess
 from tqdm import tqdm
-from keras import backend as K
 
 def train_networks(networks, dataset, memory):
     """
@@ -31,7 +30,7 @@ def optimize(n_generations, pop_size, param_options, data):
     networks = process.create_population(pop_size)
     memory = {}
     # Evolve the generation.
-    for i in xrange(n_generations):
+    for i in range(n_generations):
         print("*** Generation {} of {}".format(i+1, n_generations))
 
         # Train networks
@@ -39,8 +38,7 @@ def optimize(n_generations, pop_size, param_options, data):
 
         # calc average accuracy for this generation
         average_accuracy = get_average_accuracy(networks)
-        K.clear_session()
-        print("cleared session")
+
         print("Generation average: {:.2f}%".format(average_accuracy * 100))
         print('-'*80)
 
@@ -84,17 +82,15 @@ def print_networks(networks, n = 1):
 def find_best_model():
 
     n_generations = 20
-    pop_size = 20
-    dataset = generate_data(1000, 8, p = .6)
+    pop_size = 25
+    dataset = generate_data(1500, 8)
 
     param_options = {
-        'n_neurons': [64, 128, 256, 512, 768, 1024],
-        'n_layers': [1,2,3,4],
+        'n_neurons': [3, 4, 5, 10, 64, 128, 256, 512, 768, 1024],
+        'n_layers': [1,2,3,4,5,6,7,8],
         'activation': ['relu', 'elu', 'tanh', 'sigmoid'],
-        'optimizer': ['rmsprop', 'adam']
-        #'optimizer': ['rmsprop', 'adam', 'sgd', 'adagrad',
-        #              'adadelta', 'adamax', 'nadam']
+        'optimizer': ['rmsprop', 'adam', 'sgd', 'adagrad',
+                      'adadelta', 'adamax', 'nadam']
     }
-    print("initalized\n\n")
 
     optimize(n_generations, pop_size, param_options, dataset)

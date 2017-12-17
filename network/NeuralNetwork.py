@@ -1,5 +1,5 @@
 import random
-from train import train_and_score
+from .train import train_and_score
 
 class NeuralNetwork(object):
 
