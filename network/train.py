@@ -34,7 +34,7 @@ def compile_model(network, n_classes, input_shape):
     # Output layer.
     model.add(Dense(n_classes, activation='softmax'))
 
-    model.compile(loss='sparse_categorical_crossentropy', optimizer=optimizer,
+    model.compile(loss='categorical_crossentropy', optimizer=optimizer,
                   metrics=['accuracy'])
 
     return model
@@ -51,7 +51,10 @@ def train_and_score(network, dataset, memory):
 
 
     n_classes, batch_size, input_shape = dataset[:3]
-    x_train, x_test, y_train, y_test = dataset[3:]
+    train, validate, test = dataset[3:]
+    x_train, y_train = train
+    x_validate, y_validate = validate
+    x_test, y_test = test
 
     model = compile_model(network, n_classes, input_shape)
 
@@ -59,7 +62,7 @@ def train_and_score(network, dataset, memory):
               batch_size=batch_size,
               epochs=1000,  # using early stopping, so no real limit
               verbose=0,
-              validation_data=(x_test, y_test),
+              validation_data=(x_validate, y_validate),
               callbacks=[EarlyStopping()])
 
     score = model.evaluate(x_test, y_test, verbose=0)

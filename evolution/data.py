@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from keras.utils import to_categorical
 import math
 import random
 
@@ -48,7 +49,7 @@ def monte_carlo(n, k, max_price = 555):
             series = price_list[i - k - 1:i - 1]
             if today > series[0]*1.02:
                 y.append(2)
-            else if today < series*.98:
+            elif today < series[0]*.98:
                 y.append(0)
             else:
                 y.append(1)
@@ -56,7 +57,7 @@ def monte_carlo(n, k, max_price = 555):
             i -= 1
     return X, y
 
-def generate_data(n, k, max_price = 555, train_size = .8):
+def generate_data(n, k, max_price = 555, train_size = .8, validation_size = .1):
 
     X, y = monte_carlo(n, k, max_price)
 
@@ -67,11 +68,23 @@ def generate_data(n, k, max_price = 555, train_size = .8):
     train = np.random.rand(len(y)) < train_size
 
     X = pd.DataFrame(X)
-    x_train = X[train].as_matrix()
+
+    x_train = X[train]
     x_test = X[~train].as_matrix()
 
+    validate = np.random.rand(x_train.shape[0]) < validation_size
+    x_validate = x_train[validate].as_matrix()
+    x_train = x_train[~validate].as_matrix()
+
     y = np.array(y)
+    y = to_categorical(y, num_classes=None)
     y_train = y[train]
     y_test = y[~train]
+    y_validate = y_train[validate]
+    y_train = y_train[~validate]
 
-    return n_classes, batch_size, input_shape, x_train, x_test, y_train, y_test    
+    train = x_train, y_train
+    validate = x_validate, y_validate
+    test = x_test, y_test
+
+    return n_classes, batch_size, input_shape, train, validate, test 
