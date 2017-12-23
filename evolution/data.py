@@ -47,9 +47,9 @@ def monte_carlo(n, k, max_price = 555):
 
             today = price_list[i]
             series = price_list[i - k - 1:i - 1]
-            if today > series[0]*1.02:
+            if today > series[0]*1.01:
                 y.append(2)
-            elif today < series[0]*.98:
+            elif today < series[0]*.99:
                 y.append(0)
             else:
                 y.append(1)

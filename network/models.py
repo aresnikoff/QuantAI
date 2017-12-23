@@ -8,6 +8,10 @@ from keras.optimizers import SGD, Adam
 from keras.models import Model
 from keras.utils import np_utils
 from keras import backend as K
+from keras.utils.np_utils import to_categorical
+from keras.callbacks import EarlyStopping
+from evolution.data import generate_data
+from train import compile_model
 K.set_image_dim_ordering('tf')
 
 
@@ -41,14 +45,57 @@ class MarketNN(object):
 
     self.n_securities = param_dict["n_securities"]
     self.price_factors = param_dict["price_factors"]
-    self.n_days = 10
+    self.n_days = param_dict["n_days"]
     self.lr = param_dict["lr"]
     assert self.n_days > 3, "The pipeline requires at least 5 days worth of data"
     #self.n_portfolio_factors = n_portfolio_factors
     #self.model = self.build_model()
 
-
   def build_model(self):
+
+    n_days = self.n_days
+    n_securities = self.n_securities
+
+    n_classes = 3
+    input_shape = (n_days, )
+    print(input_shape)
+    log.info("Building model...")
+
+    # determined using genetic evolution
+    network = {
+        "n_neurons": 256,
+        "n_layers": 6,
+        "optimizer": "adagrad",
+        "activation": "tanh"
+    }
+
+    model = compile_model(network, n_classes, input_shape)
+
+    dataset = generate_data(1500, self.n_days)
+
+    n_classes, batch_size, input_shape = dataset[:3]
+    train, validate, test = dataset[3:]
+    x_train, y_train = train
+    x_validate, y_validate = validate
+    x_test, y_test = test
+
+    model.fit(x_train, y_train,
+              batch_size=batch_size,
+              epochs=1000,  # using early stopping, so no real limit
+              verbose=0,
+              validation_data=(x_validate, y_validate),
+              callbacks=[EarlyStopping()])
+
+    score = model.evaluate(x_test, y_test, verbose=0)
+
+    acc = score[1]  # 1 = accuracy, 0 = loss
+
+    done_msg = "Fit model on simulated data with accuracy: {}"
+    log.info(done_msg.format(acc))
+
+    return model
+
+  def build_model2(self):
 
     n_days = self.n_days
     n_securities = self.n_securities

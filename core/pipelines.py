@@ -46,8 +46,6 @@ def factor_dict(columns):
     return factors
 
 
-
-
 def price_pipeline(param_dict):
 
     n_days = param_dict["n_days"]

@@ -55,7 +55,7 @@ def parse_args():
   pipeline_group = parser.add_argument_group("Pipeline")
   pipeline_group.add_argument("--n_days", help = "The number of days \
     worth of data", action = "store", dest = "n_days", type = int,
-    default="10")
+    default="9")
   pipeline_group.add_argument('--n_stocks', help = "The number of stocks to \
     use in pipeline", action = "store", dest = "n_stocks", type = int,
     default="500")

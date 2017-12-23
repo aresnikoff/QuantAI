@@ -4,6 +4,7 @@ import random
 from collections import deque, namedtuple
 from models import MarketNN
 from core.preprocess import preprocess
+from evolution.data import scale
 
 
 import logging
@@ -49,10 +50,25 @@ class Agent(object):
 
     self.memory.append((state, action, risk, returns, return_values))
 
+  def rescale(self, row, max_price = 555):
+
+    row = [scale(x, (0, max_price), (0,1)) for x in row]
+    return row
 
   def act(self, state):
 
-    actions = self.bootstrap_actions(state, self.n_repeat)
+    #actions = self.bootstrap_actions(state, self.n_repeat)
+
+    market = state.apply(self.rescale, axis = 1)
+    predictions = self.model.predict(market.as_matrix())
+
+    positions = np.apply_along_axis(lambda x: np.argmax(x) - 1, 
+      axis = 1,
+      arr = predictions)
+
+    actions = Actions(positions = positions,
+            confidence = [1 for i in xrange(len(positions))],
+            type = "abc")
 
     return actions
 
@@ -65,9 +81,9 @@ class Agent(object):
 
       #state.sort_index(inplace = True)
 
-      state_input = self.reshape_input(state)
+      #state_input = self.reshape_input(state)
 
-      target = self.model.predict(state_input)
+      target = self.model.predict(state.as_matrix())
 
       stock_target = target
 
@@ -120,17 +136,17 @@ class Agent(object):
 
         else:
 
-          if reward > tolerance:
+          #if reward > tolerance:
+          if sec_returns > 1.01:
+            stock_target[i][0][0] = np.reshape([0,0,1],  [1,3])
 
-            stock_target[i][0][0][2] += 1 #np.reshape([0,0,reward],  [1,3])
-
-          elif -tolerance <= reward <= tolerance:
-
-            stock_target[i][0][0][1] += 1#np.reshape([0,1,0],  [1,3])
+          #elif -tolerance <= reward <= tolerance:
+          elif .99 <= sec_returns <= 1.01:
+            stock_target[i][0][0] = np.reshape([0,1,0],  [1,3])
 
           else:
               
-            stock_target[i][0][0][0] += 1# np.reshape([reward, 0,0], [1,3])
+            stock_target[i][0][0] = np.reshape([reward, 0,0], [1,3])
 
         #n_correct = decision_accuracy["correct"]
         #total = decision_accuracy["total"]
@@ -343,7 +359,7 @@ class Agent(object):
     return NN.build_model()
 
 
-def scale(OldList, NewMin, NewMax):
+def scale2(OldList, NewMin, NewMax):
     NewRange = float(NewMax - NewMin)
     OldMin = min(OldList)
     OldMax = max(OldList)
